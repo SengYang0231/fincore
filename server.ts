@@ -4,22 +4,30 @@ import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import multer from "multer";
 // @ts-ignore
-import pdf from "pdf-parse/lib/pdf-parse.js";
+import pdf from "pdf-parse";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import dotenv from "dotenv";
+import { createWorker } from 'tesseract.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
 const DB_ROOT = process.env.FINCORE_DB_PATH || "./fincore_db";
+const STORAGE_ROOT = path.join(DB_ROOT, "original_reports");
 
-// Ensure DB root exists
-if (!fs.existsSync(DB_ROOT)) {
-  fs.mkdirSync(DB_ROOT, { recursive: true });
-}
+// Handle pdf-parse ESM default export
+const parsePdf = (pdf as any).default || pdf;
 
-const storage = multer.memoryStorage();
+// Ensure DB and storage roots exist
+[DB_ROOT, STORAGE_ROOT].forEach(dir => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+});
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, STORAGE_ROOT),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+});
 const upload = multer({ storage });
 
 // Financial Dictionary for normalization
@@ -48,31 +56,57 @@ function extractNumericValue(text: string, keys: string[]): string | null {
   return null;
 }
 
+async function performOCR(filePath: string) {
+  const worker = await createWorker('eng');
+  const { data: { text } } = await worker.recognize(filePath);
+  await worker.terminate();
+  return text;
+}
+
 async function startServer() {
   // API routes
   app.use(express.json());
 
-  // Analyze PDFs
+  // Serve original reports
+  app.use("/reports", express.static(STORAGE_ROOT));
+
+  // Analyze Documents (PDF or Image)
   app.post("/api/analyze", upload.array("reports"), async (req: any, res) => {
     try {
       const { year, sector } = req.body;
       const files = req.files as any[];
 
       if (!files || files.length === 0) {
-        return res.status(400).json({ error: "No files uploaded" });
+        return res.status(400).json({ error: "No files provided" });
       }
 
       const results = [];
 
       for (const file of files) {
-        const data = await pdf(file.buffer);
-        const text = data.text;
+        let text = "";
+        let docType = "DIGITAL_PDF";
+
+        if (file.mimetype === "application/pdf") {
+          const buffer = fs.readFileSync(file.path);
+          const data = await parsePdf(buffer);
+          text = data.text;
+
+          // Detection: if very little text, assume it's a scanned PDF
+          if (text.trim().length < 150) {
+            console.log(`[OCR] Detected scanned PDF: ${file.originalname}`);
+            text = await performOCR(file.path);
+            docType = "SCANNED_PDF";
+          }
+        } else if (file.mimetype.startsWith("image/")) {
+          console.log(`[OCR] Detected image: ${file.originalname}`);
+          text = await performOCR(file.path);
+          docType = "IMAGE";
+        }
 
         // Metadata extraction (simplified)
         const companyNameMatch = text.match(/([A-Z\s]{4,}(?:BERHAD|BHD))/i);
-        const companyName = companyNameMatch ? companyNameMatch[1].trim() : file.originalname.replace(".pdf", "");
+        const companyName = companyNameMatch ? companyNameMatch[1].trim() : file.originalname.replace(/\.(pdf|png|jpg|jpeg)$/i, "");
         
-        // Conflict detection: look for sector keywords
         let detectedSector = sector;
         const lowText = text.toLowerCase();
         if (lowText.includes("semiconductor") || lowText.includes("software")) detectedSector = "TECHNOLOGY";
@@ -85,7 +119,6 @@ async function startServer() {
           cashFlow: {},
         };
 
-        // Extract values
         for (const [id, keys] of Object.entries(DICTIONARY)) {
           const val = extractNumericValue(text, keys);
           if (id === "revenue" || id === "netProfit" || id === "costOfSales" || id === "grossProfit") {
@@ -104,7 +137,9 @@ async function startServer() {
               FinancialYear: year,
               Sector: detectedSector,
               OriginalFileName: file.originalname,
+              StoredFileName: file.filename,
               Currency: "MYR '000",
+              DocType: docType
             },
             Financials: financials,
           },
@@ -124,12 +159,14 @@ async function startServer() {
           detectedSector,
           isConflict: detectedSector !== sector,
           fileName,
+          docType,
+          storedFileName: file.filename
         });
       }
 
       res.json({ success: true, results });
     } catch (error: any) {
-      console.error("Analysis error:", error);
+      console.error("Analysis failure:", error);
       res.status(500).json({ error: error.message });
     }
   });
@@ -162,7 +199,7 @@ async function startServer() {
     try {
       if (!fs.existsSync(DB_ROOT)) return res.json([]);
       
-      const years = fs.readdirSync(DB_ROOT);
+      const years = fs.readdirSync(DB_ROOT).filter(f => !isNaN(Number(f)));
       const archive = years.map(year => {
         const yearPath = path.join(DB_ROOT, year);
         const sectors = fs.readdirSync(yearPath);
@@ -171,6 +208,57 @@ async function startServer() {
       
       res.json(archive);
     } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Zhipu AI (Zai) Insights Endpoint
+  app.post("/api/ai-insights", async (req, res) => {
+    try {
+      const { reports, sector, year } = req.body;
+      const apiKey = process.env.ZHIPU_AI_API_KEY;
+
+      if (!apiKey) {
+        return res.status(500).json({ error: "ZHIPU_AI_API_KEY is not configured in the environment." });
+      }
+
+      const prompt = `Analyze the following financial data for companies in the ${sector} sector of Bursa Malaysia for FY${year}. 
+      Provide a concise side-by-side comparison summary. Focus on:
+      1. Profitability (Revenue and Net Profit growth/margins).
+      2. Solvency (Total Assets vs Liabilities).
+      3. Operational Efficiency.
+      
+      Keep it brief and professional.
+      
+      DATA: ${JSON.stringify(reports.map((r: any) => ({
+        name: r.Metadata.CompanyName,
+        financials: r.Financials
+      })))}`;
+
+      const response = await fetch("https://open.bigmodel.cn/api/paas/v4/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "glm-4",
+          messages: [
+            { role: "user", content: prompt }
+          ],
+          stream: false
+        })
+      });
+
+      const data = await response.json();
+      if (data.choices && data.choices[0]) {
+        res.json({ text: data.choices[0].message.content });
+      } else {
+        console.error("Zhipu AI error response:", data);
+        res.status(500).json({ error: "Invalid response from Zhipu AI" });
+      }
+    } catch (error: any) {
+      console.error("AI Insights Error:", error);
       res.status(500).json({ error: error.message });
     }
   });
@@ -196,3 +284,4 @@ async function startServer() {
 }
 
 startServer();
+X
