@@ -1,0 +1,47 @@
+export interface ExtractedField {
+  value: string | null;
+  confidence: string;
+}
+
+export interface ParsedDocument {
+  fileId: string;
+  originalFileName: string;
+  storedFileName: string;
+  docType: string;
+  suggestedCompanyName: string;
+  suggestedSector: string;
+  extractedData: Record<string, Record<string, ExtractedField>>;
+  rawTextLength: number;
+  // User-editable fields
+  companyName: string;
+  isExpanded: boolean;
+}
+
+export interface Metadata {
+  CompanyName: string;
+  FinancialYear: string;
+  Sector: string;
+  Currency: string;
+  OriginalFileName?: string;
+  StoredFileName?: string;
+  DocType?: string;
+}
+
+export interface Financials {
+  incomeStatement: Record<string, string | number | null>;
+  balanceSheet: Record<string, string | number | null>;
+  cashFlow: Record<string, string | number | null>;
+  ratios?: Record<string, string | number | null>;
+  growth?: Record<string, string | number | null>;
+  advanced?: Record<string, string | number | null>;
+}
+
+export interface CompanyReport {
+  Metadata: Metadata;
+  Financials: Financials;
+}
+
+export interface ArchiveEntry {
+  year: string;
+  sectors: string[];
+}
