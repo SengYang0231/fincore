@@ -8,6 +8,7 @@ export interface ParsedDocument {
   originalFileName: string;
   storedFileName: string;
   docType: string;
+  markdown: Markdown;
   suggestedCompanyName: string;
   suggestedSector: string;
   extractedData: Record<string, Record<string, ExtractedField>>;
@@ -36,9 +37,14 @@ export interface Financials {
   advanced?: Record<string, string | number | null>;
 }
 
+export interface Markdown{
+  pureMarkdown: string;
+}
+
 export interface CompanyReport {
   Metadata: Metadata;
   Financials: Financials;
+  Markdown: Markdown;
 }
 
 export interface ArchiveEntry {
