@@ -63,3 +63,13 @@ export function detectSector(text: string, defaultSector = "TECHNOLOGY"): string
 
   return maxScore > 2 ? leadingSector : defaultSector;
 }
+
+export function toTitleCase(text: string) {
+  return text
+    .toLowerCase()
+    .split(" ")
+    .map(word =>
+      word.charAt(0).toUpperCase() + word.slice(1)
+    )
+    .join(" ");
+}
