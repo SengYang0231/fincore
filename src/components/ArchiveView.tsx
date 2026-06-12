@@ -17,42 +17,44 @@ export function ArchiveView({ archive, setView, loadReports }: ArchiveViewProps)
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="font-mono"
+      className="font-sans animate-none"
     >
-      <header className="mb-10 border-b border-hacker-border pb-8">
-        <p className="text-[10px] tracking-[0.5em] text-hacker-green-dim mb-2">PERSISTENT_XML_STORE</p>
-        <h1 className="text-4xl font-serif tracking-tight glow-text">FILESYSTEM_ARCHIVE</h1>
+      <header className="mb-10 border-b border-slate-200 pb-8">
+        <p className="text-[10px] tracking-[0.2em] font-extrabold text-slate-400 uppercase mb-2">Persistent Document Store</p>
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Historical Filesystem Archive</h1>
       </header>
 
       {archive.length === 0 ? (
-        <div className="h-[50vh] flex flex-col items-center justify-center text-hacker-green-dim gap-4">
-          <Database className="w-12 h-12 opacity-10" />
-          <p className="text-xs tracking-[0.5em] opacity-40">FS_EMPTY // NO_RECORDS</p>
+        <div className="h-[50vh] flex flex-col items-center justify-center text-slate-400 gap-4">
+          <Database className="w-12 h-12 opacity-25" />
+          <p className="text-xs tracking-wider uppercase font-bold text-slate-400 opacity-60">Archive Storage empty</p>
           <button
             onClick={() => setView("upload")}
-            className="text-xs border border-hacker-border px-6 py-2 hover:border-hacker-green transition-all cursor-pointer"
+            className="text-xs border border-slate-200 bg-white shadow-xs rounded-lg px-6 py-2.5 hover:border-hacker-green hover:text-hacker-green hover:shadow-xs transition-all font-bold cursor-pointer"
           >
-            → INGEST_FIRST_DOCUMENT
+            → INGEST FIRST DOCUMENT
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 text-white">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {archive.map((yItem, i) => (
-            <div key={i} className="space-y-3">
-              <h2 className="text-2xl font-serif text-white flex items-center gap-3">
-                <span className="text-hacker-green-dim text-sm font-mono">/</span>
+            <div key={i} className="space-y-4">
+              <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
+                <span className="text-slate-300 font-mono text-lg">📁</span>
                 {yItem.year}
               </h2>
-              {yItem.sectors.map((s: string, j: number) => (
-                <button
-                  key={j}
-                  onClick={() => loadReports(yItem.year, s)}
-                  className="w-full bg-black border border-hacker-border px-5 py-4 flex items-center justify-between hover:border-hacker-green hover:bg-hacker-green/5 transition-all group text-left cursor-pointer"
-                >
-                  <span className="text-xs font-bold tracking-widest text-hacker-green">{s.replace(/_/g, " ")}</span>
-                  <ChevronRight className="w-4 h-4 text-hacker-green-dim group-hover:text-hacker-green group-hover:translate-x-1 transition-all" />
-                </button>
-              ))}
+              <div className="space-y-2">
+                {yItem.sectors.map((s: string, j: number) => (
+                  <button
+                    key={j}
+                    onClick={() => loadReports(yItem.year, s)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-5 py-4 flex items-center justify-between hover:border-hacker-green hover:bg-slate-50 transition-all group text-left cursor-pointer shadow-3xs"
+                  >
+                    <span className="text-xs font-bold tracking-wide text-slate-700 group-hover:text-hacker-green">{s.replace(/_/g, " ")}</span>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-hacker-green group-hover:translate-x-1 transition-all" />
+                  </button>
+                ))}
+              </div>
             </div>
           ))}
         </div>

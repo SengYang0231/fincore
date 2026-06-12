@@ -20,15 +20,15 @@ export function FieldInput({
   confidence,
   onChange,
 }: FieldInputProps) {
-  const confidenceColor = confidence === "high" ? "text-hacker-green" : confidence === "medium" ? "text-yellow-500" : "text-hacker-green-dim";
+  const confidenceColor = confidence === "high" ? "text-emerald-600" : confidence === "medium" ? "text-amber-500" : "text-slate-400";
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 font-sans">
       <div className="flex items-center justify-between">
-        <label className="text-[9px] text-hacker-green-dim truncate">{label}</label>
+        <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wider truncate">{label}</label>
         {value && (
-          <span className={cn("text-[8px]", confidenceColor)}>
-            {confidence === "high" ? "●" : confidence === "medium" ? "◐" : "○"}
+          <span className={cn("text-[9px] font-bold", confidenceColor)} title={`Confidence: ${confidence}`}>
+            {confidence === "high" ? "High" : confidence === "medium" ? "Med" : "Low"}
           </span>
         )}
       </div>
@@ -37,8 +37,8 @@ export function FieldInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          "w-full bg-black border px-3 py-2 text-xs font-mono focus:outline-none transition-colors",
-          value ? "border-hacker-border text-white" : "border-hacker-border/30 text-hacker-green-dim",
+          "w-full bg-slate-50/50 border px-3 py-2 text-xs font-mono rounded-lg focus:bg-white focus:outline-none transition-all focus:ring-1 focus:ring-hacker-green/20",
+          value ? "border-slate-200 text-slate-800 font-semibold" : "border-slate-200/50 text-slate-400",
           "focus:border-hacker-green"
         )}
         placeholder="—"

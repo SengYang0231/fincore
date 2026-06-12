@@ -26,11 +26,11 @@ export function DocumentCard({
   const [previewVisible, setPreviewVisible] = useState(false);
 
   return (
-    <div className="bg-black border border-hacker-border">
+    <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-hacker-border/50">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
         <div className="flex items-center gap-4 flex-1">
-          <div className="w-10 h-10 border border-hacker-green bg-hacker-green/10 flex items-center justify-center text-sm font-bold text-hacker-green">
+          <div className="w-10 h-10 border border-teal-200 bg-teal-50/50 flex items-center justify-center text-sm font-extrabold text-teal-800 rounded-lg">
             {docIndex + 1}
           </div>
           <div className="flex-1">
@@ -38,32 +38,32 @@ export function DocumentCard({
               type="text"
               value={doc.companyName}
               onChange={(e) => onUpdateName(docIndex, e.target.value)}
-              className="w-full bg-transparent border-b border-hacker-border px-0 py-1 text-sm font-bold text-white focus:outline-none focus:border-hacker-green transition-colors"
+              className="w-full bg-transparent border-b border-slate-200 px-0 py-1 text-sm font-bold text-slate-800 focus:outline-none focus:border-hacker-green transition-colors"
               placeholder="Company Name"
             />
-            <div className="flex items-center gap-3 mt-1">
-              <span className="text-[10px] text-hacker-green-dim">{doc.originalFileName}</span>
-              <span className="text-[10px] px-2 py-0.5 bg-hacker-green/10 text-hacker-green">{doc.docType}</span>
-              <span className="text-[10px] text-hacker-green-dim opacity-50">{doc.rawTextLength} chars extracted</span>
+            <div className="flex items-center gap-3 mt-1.5 font-sans">
+              <span className="text-[10px] text-slate-400 font-medium">{doc.originalFileName}</span>
+              <span className="text-[9px] font-bold px-2 py-0.5 bg-teal-50 border border-teal-100/50 text-teal-800 rounded">{doc.docType}</span>
+              <span className="text-[10px] text-slate-400 font-medium opacity-75">{doc.rawTextLength} chars extracted</span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 font-sans">
           <button
             onClick={() => setPreviewVisible(!previewVisible)}
-            className="text-[10px] border border-hacker-border px-3 py-1.5 flex items-center gap-1.5 hover:border-hacker-green hover:text-hacker-green transition-all cursor-pointer"
+            className="text-[10px] border border-slate-200 rounded-lg px-3 py-1.5 flex items-center gap-1.5 hover:bg-slate-50 hover:border-slate-300 font-semibold text-slate-600 transition-all cursor-pointer"
           >
-            <Eye className="w-3 h-3" /> {previewVisible ? "HIDE" : "VIEW"}_SOURCE
+            <Eye className="w-3.5 h-3.5" /> {previewVisible ? "Hide" : "View"} PDF
           </button>
           <button
             onClick={() => onToggleExpanded(docIndex)}
-            className="w-8 h-8 flex items-center justify-center border border-hacker-border hover:border-hacker-green hover:text-hacker-green transition-all cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer"
           >
             {doc.isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
           <button
             onClick={() => onRemove(docIndex)}
-            className="w-8 h-8 flex items-center justify-center border border-hacker-border hover:border-red-500 hover:text-red-400 transition-all cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -75,25 +75,24 @@ export function DocumentCard({
         {previewVisible && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 400, opacity: 1 }}
+            animate={{ height: 450, opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden border-b border-hacker-border/50"
+            className="overflow-hidden border-b border-slate-100"
           >
             {doc.docType === "IMAGE" ? (
-              <div className="w-full h-full overflow-auto flex items-start justify-center p-4 bg-neutral-950">
+              <div className="w-full h-full overflow-auto flex items-start justify-center p-4 bg-slate-50">
                 <img
                   src={`/reports/${doc.storedFileName}`}
                   alt={doc.companyName}
                   referrerPolicy="no-referrer"
-                  className="max-w-full max-h-full object-contain"
+                  className="max-w-full max-h-full object-contain rounded-lg border border-slate-200 shadow-xs"
                 />
               </div>
             ) : (
               <iframe
                 src={`/reports/${doc.storedFileName}#toolbar=0&navpanes=0`}
-                className="w-full h-full"
+                className="w-full h-full bg-white"
                 title="Source Document"
-                style={{ filter: "invert(1) hue-rotate(180deg) brightness(0.9)" }}
               />
             )}
           </motion.div>
@@ -109,14 +108,14 @@ export function DocumentCard({
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 bg-slate-50/20">
               {Object.entries(doc.extractedData).map(([category, fields]) => {
                 const hasValues = Object.values(fields).some((f) => f.value !== null);
                 if (!hasValues && category !== "incomeStatement" && category !== "balanceSheet") return null;
 
                 return (
                   <div key={category}>
-                    <p className="text-[10px] tracking-[0.4em] text-hacker-green-dim font-bold mb-3 border-b border-hacker-border/30 pb-2">
+                    <p className="text-[10px] tracking-[0.1em] text-slate-400 font-extrabold uppercase mb-3 border-b border-slate-100 pb-2">
                       {CATEGORY_LABELS[category] || category.toUpperCase()}
                     </p>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
