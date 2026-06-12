@@ -59,6 +59,7 @@ export const FIELD_LABELS: Record<string, string> = {
   financingCashFlow: "Financing Cash Flow",
   freeCashFlow: "Free Cash Flow",
   capitalExpenditure: "Capital Expenditure",
+
   // Ratios
   roe: "Return on Equity (ROE)",
   roa: "Return on Assets (ROA)",
@@ -83,10 +84,12 @@ export const FIELD_LABELS: Record<string, string> = {
   dividendPerShare: "Dividend Per Share",
   dividendPayoutRatio: "Payout Ratio",
   retentionRatio: "Retention Ratio",
+  
   // Growth
   revenueGrowth: "Revenue Growth",
   netIncomeGrowth: "Net Income Growth",
   cagr: "CAGR",
+
   // Advanced
   enterpriseValue: "Enterprise Value",
   evEbitda: "EV/EBITDA",
