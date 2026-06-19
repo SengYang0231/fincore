@@ -4,5 +4,8 @@ dist/
 coverage/
 .DS_Store
 *.log
-.env*
-!.env.example
+venv/
+.env.example*
+fincore_db/
+.env
+eng.traineddata

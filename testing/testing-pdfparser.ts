@@ -1,14 +1,27 @@
 // PDF parser
-// Only for digital PDF
+// Only for "DIGITAL PDF"
 // Scan for words inside the PDF
+// To run: node testing/testing-pdfparser.ts
 
-import fs from "fs";
-import { PDFParse } from "pdf-parse";
+import fs from "fs";    // FS - file system
+import pdfParse from "pdf-parse";
 
-const dataBuffer = fs.readFileSync("./testing/sample2.pdf");
+const dataBuffer = fs.readFileSync("./testing/finstat.pdf");
+const filePath = 'testing/output/sample1.txt';
 
-const parser = new PDFParse({ data: dataBuffer });
+try {
+    //Testing line
+    // console.log("buffer size:", dataBuffer?.length);
 
-const result = await parser.getText();
+    const result = await pdfParse(dataBuffer);
 
-console.log(result.text);
+    // Print result
+    // console.log(result.text);
+
+    // Save to text file
+    const filePath = "testing/output/sample2.txt";
+    fs.writeFileSync(filePath, result.text, "utf-8");
+
+} catch (error) {
+    console.error("Error parsing PDF:", error);
+}

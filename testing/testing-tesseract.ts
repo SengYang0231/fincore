@@ -1,11 +1,19 @@
 // Tesseract
 // Convert an image into texts
+// To run: node testing/testing-tesseract.ts
 
 import Tesseract from "tesseract.js";
 
 const result = await Tesseract.recognize(
-    "./sample3.png",
+    "./testing/sample3.png",
     "eng"
 );
 
-console.log(result.data.text);
+try {
+    const filePath = "testing/output/sample_text1.txt";
+
+    console.log(result.data.text);
+
+} catch (error){
+    console.log(error);
+}
